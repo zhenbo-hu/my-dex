@@ -33,12 +33,7 @@ contract Exchange is ERC20 {
     }
 
     function tokenToEthSwap(uint256 _tokensSold, uint256 _minEth) public {
-        uint256 tokenReserve = getReserve();
-        uint256 ethBought = getAmount(
-            _tokensSold,
-            tokenReserve,
-            address(this).balance
-        );
+        uint256 ethBought = getEthAmount(_tokensSold);
 
         require(ethBought >= _minEth, "insufficient output amount");
 
@@ -64,12 +59,7 @@ contract Exchange is ERC20 {
             "invalid exchange address"
         );
 
-        uint256 tokenReserve = getReserve();
-        uint256 ethBought = getAmount(
-            _tokenSold,
-            tokenReserve,
-            address(this).balance
-        );
+        uint256 ethBought = getEthAmount(_tokenSold);
 
         IERC20(tokenAddress).transferFrom(
             msg.sender,
@@ -91,8 +81,9 @@ contract Exchange is ERC20 {
     }
 
     function addLiquidity(uint _tokenAmount) public payable returns (uint256) {
+        IERC20 token = IERC20(tokenAddress);
+
         if (getReserve() == 0) {
-            IERC20 token = IERC20(tokenAddress);
             token.transferFrom(msg.sender, address(this), _tokenAmount);
 
             uint256 liquidity = address(this).balance;
@@ -103,9 +94,9 @@ contract Exchange is ERC20 {
             uint256 ethReserve = address(this).balance - msg.value;
             uint256 tokenReserve = getReserve();
             uint256 tokenAmount = (msg.value * tokenReserve) / ethReserve;
+
             require(_tokenAmount >= tokenAmount, "insufficient token amount!");
 
-            IERC20 token = IERC20(tokenAddress);
             token.transferFrom(msg.sender, address(this), tokenAmount);
 
             uint256 liquidity = (totalSupply() * msg.value) / ethReserve;
@@ -139,7 +130,8 @@ contract Exchange is ERC20 {
 
         uint256 tokenReserve = getReserve();
 
-        return getAmount(_ethSold, address(this).balance, tokenReserve);
+        return
+            getAmount(_ethSold, address(this).balance - _ethSold, tokenReserve);
     }
 
     function getEthAmount(uint256 _tokenSold) public view returns (uint256) {
@@ -157,7 +149,7 @@ contract Exchange is ERC20 {
     ) private pure returns (uint256) {
         require(inputReserve > 0 && outputReserve > 0, "invalid reserves");
 
-        uint256 inputAmountWithFee = inputAmount * 99;
+        uint256 inputAmountWithFee = inputAmount * 99; // 1% trading fee
         uint256 numerator = inputAmountWithFee * outputReserve;
         uint256 denominator = (inputReserve * 100) + inputAmountWithFee;
 
@@ -165,12 +157,7 @@ contract Exchange is ERC20 {
     }
 
     function ethToToken(uint256 _minTokens, address recipient) private {
-        uint256 tokenReserve = getReserve();
-        uint256 tokensBought = getAmount(
-            msg.value,
-            address(this).balance - msg.value,
-            tokenReserve
-        );
+        uint256 tokensBought = getTokenAmount(msg.value);
 
         require(tokensBought >= _minTokens, "insufficient output amount");
 
