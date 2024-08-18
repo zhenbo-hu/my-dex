@@ -25,6 +25,7 @@ contract MyuniswapV2Factory {
     ) public returns (address pair) {
         if (tokenA == tokenB) revert IdenticalAddresses();
 
+        // 确保同一个币对只会被生成一次Pair合约
         (address token0, address token1) = tokenA < tokenB
             ? (tokenA, tokenB)
             : (tokenB, tokenA);
@@ -35,6 +36,8 @@ contract MyuniswapV2Factory {
 
         bytes memory bytecode = type(MyuniswapV2Pair).creationCode;
         bytes32 salt = keccak256(abi.encodePacked(token0, token1));
+
+        // 通过create2来生成MyuniswapV2Pair合约，可以提前确定生成的合约地址
         assembly {
             pair := create2(0, add(bytecode, 32), mload(bytecode), salt)
         }

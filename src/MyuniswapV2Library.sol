@@ -10,6 +10,7 @@ library MyuniswapV2Library {
     error InsufficientLiquidity();
     error InvalidPath();
 
+    // 根据提供的工厂地址和token地址，返回该币对的流动池token储备数量
     function getReserves(
         address factoryAddress,
         address tokenA,
@@ -24,6 +25,7 @@ library MyuniswapV2Library {
             : (reserve1, reserve0);
     }
 
+    // 根据流动池中token数量和想加入流动池中一个token的数量，计算另一个token应加入的数量
     function quote(
         uint256 amountIn,
         uint256 reserveIn,
@@ -35,6 +37,7 @@ library MyuniswapV2Library {
         return (amountIn * reserveOut) / reserveIn;
     }
 
+    // 将token按照字节排序（为保证币对唯一）
     function sortTokens(
         address tokenA,
         address tokenB
@@ -42,6 +45,7 @@ library MyuniswapV2Library {
         return tokenA < tokenB ? (tokenA, tokenB) : (tokenA, tokenB);
     }
 
+    // 根据factory地址和token地址，计算该币对的合约地址（和create2向呼应）
     function pairFor(
         address factoryAddress,
         address tokenA,
@@ -64,6 +68,7 @@ library MyuniswapV2Library {
         );
     }
 
+    // 包含了交易手续费的数量计算函数
     function getAmountOut(
         uint256 amountIn,
         uint256 reserveIn,
